@@ -1,18 +1,16 @@
 # Custom iOS7 AlertView
 
-`v0.81`
+The `addSubview` method is not available in `UIAlertView` in iOS7 any more. The view hierarchy for this class is private and must not be modified.
 
-The addSubview is not available in UIAlertView in iOS7 any more. The view hierarchy for this class is private and must not be modified.
+As a solution, this class creates an iOS7-style AlertView for which you can supply your own buttons and `UIView` for the content. The animations and the looks are copied too and no images or other resources are needed.
 
-As a solution, this class creates an iOS7-style dialog which you can extend with any UIViews or buttons. The animations and the looks are copied too and no images or other resources are needed.
+![A demo screen](screenshot.png)
 
-![A demo screen](Docs/screen.png)
+## Installation
 
-## Install
+It's as simple as adding the following file to your project:
 
-As simple as adding the following file to your project:
-
-* CustomIOS7AlertView.swift
+* [CustomIOS7AlertView.swift](CustomIOS7AlertView.swift)
 
 ## Support
 
@@ -20,94 +18,84 @@ Only iOS 7 and newer.
 
 ## Quick start guide
 
-1. Create a CustomIOS7AlertView instance
+1. Create a CustomIOS7AlertView instance:
 
-    ```
-    var alertView = CustomIOS7AlertView()
-    ```
+```
+let alertView = CustomIOS7AlertView()
+```
 
-2. Add some custom content to the alert view
+2. Add some custom content to the alert view:
 
-    ```
-    var customView: UIView = ...
+```
+alertView.containerView = UIView(...)
+```
 
-    alertView.setContainerView(customView)
-    ```
+3. Set a callback
 
-3. Display the dialog
+Using a delegate: (see the [properties](#properties) for the protocol)
 
-    ```
-    alertView.show()
-    ```
+```
+alertView.delegate = self
+```
 
-## More functions
+Or a closure:
 
-* Close the dialog
+```
+alertView.onButtonTouchUpInside = {
+  (alertView: CustomIOS7AlertView, buttonIndex: Int) -> Void in
 
-    ```
-    alertView.close()
-    ```
+  println("Closure says: Button with index \(buttonIndex) has been touched!")
+}
+```
 
-* To add more buttons, pass a list of titles
+4. Display the alertView:
 
-    ```
-    alertView.setButtonTitles(["Cancel", "OK"])
-    ```
+```
+alertView.show()
+```
 
-* You can enable or disable the iOS7 parallax effects on the alert view
+## Functions
 
-    ```
-    alertView.setUseMotionEffects(true)
-    ```
+* Show the alertView:
 
-* Handle button clicks with a custom delegate
+```
+alertView.show()
+```
 
-    First, set the delegate:
+* Close the alertView:
 
-    ```
-    alertView.delegate = self
-    ```
+```
+alertView.close()
+```
 
-    Then add the delegate methods:
+## <a name="properties"></a>Properties
 
-    ```
-    - (void)customIOS7dialogButtonTouchUpInside: (CustomIOS7AlertView *)alertView clickedButtonAtIndex: (NSInteger)buttonIndex
-    {
-        NSLog(@"Button at position %d is clicked on alertView %d.", buttonIndex, [alertView tag]);
-    }
-    ```
+* `buttonHeight: CGFloat` The height of the buttons. Default: `50`
+* `buttonsDividerHeight: CGFloat` The height of the buttons divider. Default: `1`
+* `cornerRadius: CGFloat` The radius of the alert view. Default: `7`
 
-* Handle button clicks with a code block
+* `useMotionEffects: Bool` Whether to use motion effects or not. Default: `true`
+* `motionEffectExtent: Int` The extent of the motion effects. Default: `10`
 
-    ```
-    [alertView setOnButtonTouchUpInside:^(CustomIOS7AlertView *alertView, int buttonIndex) {
-        NSLog(@"Block: Button at position %d is clicked on alertView %d.", buttonIndex, [alertView tag]);
-        [alertView close];
-    }];
-    ```
+* `containerView: UIView!` The custom view to show. By default this is an empty view.
 
-    You can also disable all other delegates by:
+* `buttonTitles: [String]?` An array of strings. Each string will be a button. Default: `["Close"]`
+* `buttonColor: UIColor?` The color of the buttons in normal state. By default this is the `UIButton`'s default `tintColor`
+* `buttonColorHighlighted: UIColor?` The color of the buttons in normal state. By default this the same as `buttonColor` but with an alpha of `0.5`
 
-    ```
-[alertView setDelegate:self];
-    ```
+* `delegate: CustomIOS7AlertViewDelegate?` A delegate that implements the `CustomIOS7AlertViewDelegate` protocol below. `nil` by default.
 
-## Special thanks to
+```
+protocol CustomIOS7AlertViewDelegate: class {
+  func customIOS7AlertViewButtonTouchUpInside(alertView: CustomIOS7AlertView, buttonIndex: Int)
+}
+```
 
-* [@wimagguc](https://github.com/wimagguc) for pulling this all together in a repo for Obj-C
-* [@tamasdancsi](https://github.com/tamasdancsi) for his support with the initial code  
-* [@dingosky](https://github.com/dingosky) for his work on the parallax effects code  
-* [@raspu](https://github.com/raspu) for his work on the protocol delegates, iOS6 support and onButtonClick blocks  
-* [@sbandol](https://github.com/sbandol) for his idea on adding the AlertView as the top most view in the hierarchy
-* [@scorpiozj](https://github.com/scorpiozj) for his work on the rotation code
-* [@kwent](https://github.com/kwent) for adding performance optimisations
-* [@thomasaw](https://github.com/thomasaw) for the refract on the deprecated initWithParentview
+* `onButtonTouchUpInside: ((alertView: CustomIOS7AlertView, buttonIndex: Int) -> Void)?` A closure that is called when a button is touched. `nil` by default.
 
 ## License
 
 **Please feel free to push back anything you think is useful for the project.**
-
-`License info is here for request. Please suggest a better one if you are familiar with copyright.`
 
 Copyright (c) 2013 Richard Dancsi
 

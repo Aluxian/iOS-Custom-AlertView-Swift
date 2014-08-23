@@ -18,13 +18,13 @@ class CustomIOS7AlertView: UIView {
     var buttonsDividerHeight: CGFloat = 1
     var cornerRadius: CGFloat = 7
     
-    var useMotionEffects = true
-    var motionEffectExtent = 10
+    var useMotionEffects: Bool = true
+    var motionEffectExtent: Int = 10
     
-    var alertView: UIView!
+    private var alertView: UIView!
     var containerView: UIView!
     
-    var buttonTitles = [String]?()
+    var buttonTitles: [String]? = [String]?()
     var buttonColor: UIColor?
     var buttonColorHighlighted: UIColor?
     
@@ -85,12 +85,6 @@ class CustomIOS7AlertView: UIView {
         }, nil)
     }
     
-    // Call the delegates
-    func buttonTouchUpInside(sender: UIButton!) {
-        delegate?.customIOS7AlertViewButtonTouchUpInside(self, buttonIndex: sender.tag)
-        onButtonTouchUpInside?(alertView: self, buttonIndex: sender.tag)
-    }
-    
     // Close the alertView, remove views
     func close() {
         let currentTransform = alertView.layer.transform
@@ -114,8 +108,14 @@ class CustomIOS7AlertView: UIView {
         })
     }
     
+    // Call the delegates
+    internal func buttonTouchUpInside(sender: UIButton!) {
+        delegate?.customIOS7AlertViewButtonTouchUpInside(self, buttonIndex: sender.tag)
+        onButtonTouchUpInside?(alertView: self, buttonIndex: sender.tag)
+    }
+    
     // Create the containerView
-    func createAlertView() -> UIView {
+    private func createAlertView() -> UIView {
         if containerView == nil {
             containerView = UIView(frame: CGRectMake(0, 0, 300, 150))
         }
@@ -163,7 +163,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Generate the view for the buttons divider
-    func generateButtonsDivider(bounds: CGRect) -> UIView {
+    private func generateButtonsDivider(bounds: CGRect) -> UIView {
         let divider = UIView(frame: CGRectMake(
             0,
             bounds.size.height - buttonHeight - buttonsDividerHeight,
@@ -177,7 +177,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Generate the gradient layer of the alertView
-    func generateGradient(bounds: CGRect) -> CAGradientLayer {
+    private func generateGradient(bounds: CGRect) -> CAGradientLayer {
         let gradient = CAGradientLayer()
 
         gradient.frame = bounds
@@ -193,7 +193,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Add the buttons to the containerView
-    func addButtonsToView(container: UIView) {
+    private func addButtonsToView(container: UIView) {
         if buttonTitles == nil || buttonTitles?.count == 0 {
             return
         }
@@ -214,7 +214,7 @@ class CustomIOS7AlertView: UIView {
             button.addTarget(self, action: "buttonTouchUpInside:", forControlEvents: UIControlEvents.TouchUpInside)
 
             let colorNormal = buttonColor != nil ? buttonColor : button.tintColor
-            let colorHighlighted = buttonColorHighlighted != nil ? buttonColorHighlighted : button.tintColor.colorWithAlphaComponent(0.5)
+            let colorHighlighted = buttonColorHighlighted != nil ? buttonColorHighlighted : colorNormal.colorWithAlphaComponent(0.5)
             
             button.setTitle(buttonTitles![buttonIndex], forState: UIControlState.Normal)
             button.setTitleColor(colorNormal, forState: UIControlState.Normal)
@@ -225,7 +225,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Calculate the size of the dialog
-    func calculateDialogSize() -> CGSize {
+    private func calculateDialogSize() -> CGSize {
         return CGSizeMake(
             containerView.frame.size.width,
             containerView.frame.size.height + buttonHeight + buttonsDividerHeight
@@ -233,7 +233,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Calculate the size of the screen
-    func calculateScreenSize() -> CGSize {
+    private func calculateScreenSize() -> CGSize {
         let width = UIScreen.mainScreen().bounds.width
         let height = UIScreen.mainScreen().bounds.height
 
@@ -245,7 +245,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Add motion effects
-    func applyMotionEffects(view: UIView) {
+    private func applyMotionEffects(view: UIView) {
         let horizontalEffect = UIInterpolatingMotionEffect(keyPath: "center.x", type: UIInterpolatingMotionEffectType.TiltAlongHorizontalAxis)
         horizontalEffect.minimumRelativeValue = -motionEffectExtent
         horizontalEffect.maximumRelativeValue = +motionEffectExtent
@@ -261,7 +261,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Handle device orientation changes
-    func deviceOrientationDidChange(notification: NSNotification) {
+    internal func deviceOrientationDidChange(notification: NSNotification) {
         let interfaceOrientation = UIApplication.sharedApplication().statusBarOrientation
         let startRotation = self.valueForKeyPath("layer.transform.rotation.z").floatValue
         
@@ -299,7 +299,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Handle keyboard show changes
-    func keyboardWillShow(notification: NSNotification) {
+    internal func keyboardWillShow(notification: NSNotification) {
         let screenSize = self.calculateScreenSize()
         let dialogSize = self.calculateDialogSize()
         
@@ -320,7 +320,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Handle keyboard hide changes
-    func keyboardWillHide(notification: NSNotification) {
+    internal func keyboardWillHide(notification: NSNotification) {
         let screenSize = self.calculateScreenSize()
         let dialogSize = self.calculateDialogSize()
         
@@ -335,7 +335,7 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Whether the UI is in landscape mode
-    func orientationIsLandscape() -> Bool {
+    private func orientationIsLandscape() -> Bool {
         return UIInterfaceOrientationIsLandscape(UIApplication.sharedApplication().statusBarOrientation)
     }
     
