@@ -233,6 +233,20 @@ class CustomIOS7AlertView: UIView {
             button.setTitleColor(colorHighlighted, forState: UIControlState.Highlighted)
             
             container.addSubview(button)
+            
+            // Show a divider between buttons
+            if buttonIndex > 0 {
+                let verticalLineView = UIView(frame: CGRectMake(
+                    container.bounds.size.width / CGFloat(buttonTitles!.count) * CGFloat(buttonIndex),
+                    container.bounds.size.height - buttonHeight - buttonsDividerHeight,
+                    buttonsDividerHeight,
+                    buttonHeight
+                ))
+                
+                verticalLineView.backgroundColor = UIColor(red: 198/255, green: 198/255, blue: 198/255, alpha: 1)
+            
+                container.addSubview(verticalLineView)
+            }
         }
     }
     
