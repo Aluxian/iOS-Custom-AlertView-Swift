@@ -24,7 +24,7 @@ class CustomIOS7AlertView: UIView {
     private var alertView: UIView!
     var containerView: UIView!
     
-    var buttonTitles: [String]? = [String]?()
+    var buttonTitles: [String]? = ["Close"]
     var buttonColor: UIColor?
     var buttonColorHighlighted: UIColor?
     
@@ -32,26 +32,26 @@ class CustomIOS7AlertView: UIView {
     var onButtonTouchUpInside: ((alertView: CustomIOS7AlertView, buttonIndex: Int) -> Void)?
     
     override init() {
-        super.init()
-        
-        self.frame = CGRectMake(0, 0, UIScreen.mainScreen().bounds.size.width, UIScreen.mainScreen().bounds.size.height);
-        buttonTitles = ["Close"]
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "deviceOrientationDidChange:", name: UIDeviceOrientationDidChangeNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillShow:", name:UIKeyboardWillShowNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillHide:", name:UIKeyboardWillHideNotification, object: nil)
+        super.init(frame: CGRectMake(0, 0, UIScreen.mainScreen().bounds.size.width, UIScreen.mainScreen().bounds.size.height))
+        setObservers()
     }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        setObservers()
     }
 
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        setObservers()
     }
     
     // Create the dialog view and animate its opening
     func show() {
+        show(nil)
+    }
+    
+    func show(completion: ((Bool) -> Void)?) {
         alertView = createAlertView()
         
         self.layer.shouldRasterize = true
@@ -62,17 +62,17 @@ class CustomIOS7AlertView: UIView {
         
         // Attach to the top most window
         switch (UIApplication.sharedApplication().statusBarOrientation) {
-            case UIInterfaceOrientation.LandscapeLeft:
-                self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 270 / 180))
-                
-            case UIInterfaceOrientation.LandscapeRight:
-                self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 90 / 180))
-                
-            case UIInterfaceOrientation.PortraitUpsideDown:
-                self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 180 / 180))
-                
-            default:
-                break
+        case UIInterfaceOrientation.LandscapeLeft:
+            self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 270 / 180))
+            
+        case UIInterfaceOrientation.LandscapeRight:
+            self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 90 / 180))
+            
+        case UIInterfaceOrientation.PortraitUpsideDown:
+            self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 180 / 180))
+            
+        default:
+            break
         }
         
         self.frame = CGRectMake(0, 0, self.frame.width, self.frame.height)
@@ -82,11 +82,15 @@ class CustomIOS7AlertView: UIView {
             self.backgroundColor = UIColor(white: 0, alpha: 0.4)
             self.alertView.layer.opacity = 1
             self.alertView.layer.transform = CATransform3DMakeScale(1, 1, 1)
-        }, nil)
+        }, completion)
     }
     
     // Close the alertView, remove views
     func close() {
+        close(nil)
+    }
+    
+    func close(completion: ((Bool) -> Void)?) {
         let currentTransform = alertView.layer.transform
         
         let startRotation = alertView.valueForKeyPath("layer.transform.rotation.z").floatValue
@@ -99,12 +103,13 @@ class CustomIOS7AlertView: UIView {
             self.backgroundColor = UIColor(white: 0, alpha: 0)
             self.alertView.layer.transform = CATransform3DConcat(currentTransform, CATransform3DMakeScale(0.6, 0.6, 1))
             self.alertView.layer.opacity = 0
-        }, completion: { (Bool) in
+        }, completion: { (finished: Bool) in
             for view in self.subviews as [UIView] {
                 view.removeFromSuperview()
             }
             
             self.removeFromSuperview()
+            completion?(finished)
         })
     }
     
@@ -112,6 +117,13 @@ class CustomIOS7AlertView: UIView {
     internal func buttonTouchUpInside(sender: UIButton!) {
         delegate?.customIOS7AlertViewButtonTouchUpInside(self, buttonIndex: sender.tag)
         onButtonTouchUpInside?(alertView: self, buttonIndex: sender.tag)
+    }
+    
+    // Observe orientation and keyboard changes
+    private func setObservers() {
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "deviceOrientationDidChange:", name: UIDeviceOrientationDidChangeNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillShow:", name:UIKeyboardWillShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillHide:", name:UIKeyboardWillHideNotification, object: nil)
     }
     
     // Create the containerView
