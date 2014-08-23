@@ -56,17 +56,13 @@ alertView.show()
 
 ## Functions
 
-* Show the alertView:
+* `show()` Shows the alertView
+* `show(completion: ((Bool) -> Void)?)` Shows the alertView then runs `completion`
 
-```
-alertView.show()
-```
+* `close()` Closes the alertView
+* `close(completion: ((Bool) -> Void)?)` Closes the alertView then runs `completion`
 
-* Close the alertView:
-
-```
-alertView.close()
-```
+* `setButtonEnabled(enabled: Bool, buttonName: String)` Enables or disables a button. Make sure you call this after `show()`
 
 ## <a name="properties"></a>Properties
 

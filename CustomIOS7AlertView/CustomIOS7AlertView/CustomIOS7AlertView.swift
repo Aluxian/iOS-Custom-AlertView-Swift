@@ -47,11 +47,11 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Create the dialog view and animate its opening
-    func show() {
+    internal func show() {
         show(nil)
     }
     
-    func show(completion: ((Bool) -> Void)?) {
+    internal func show(completion: ((Bool) -> Void)?) {
         alertView = createAlertView()
         
         self.layer.shouldRasterize = true
@@ -86,11 +86,11 @@ class CustomIOS7AlertView: UIView {
     }
     
     // Close the alertView, remove views
-    func close() {
+    internal func close() {
         close(nil)
     }
     
-    func close(completion: ((Bool) -> Void)?) {
+    internal func close(completion: ((Bool) -> Void)?) {
         let currentTransform = alertView.layer.transform
         
         let startRotation = alertView.valueForKeyPath("layer.transform.rotation.z").floatValue
@@ -113,10 +113,19 @@ class CustomIOS7AlertView: UIView {
         })
     }
     
-    // Call the delegates
-    internal func buttonTouchUpInside(sender: UIButton!) {
-        delegate?.customIOS7AlertViewButtonTouchUpInside(self, buttonIndex: sender.tag)
-        onButtonTouchUpInside?(alertView: self, buttonIndex: sender.tag)
+    // Enables or disables the specified button
+    // Should be used after the alert view is displayed
+    internal func setButtonEnabled(enabled: Bool, buttonName: String) {
+        for subview in alertView.subviews as [UIView] {
+            if subview is UIButton {
+                let button = subview as UIButton
+                
+                if button.currentTitle == buttonName {
+                    button.enabled = enabled
+                    break
+                }
+            }
+        }
     }
     
     // Observe orientation and keyboard changes
@@ -231,6 +240,7 @@ class CustomIOS7AlertView: UIView {
             button.setTitle(buttonTitles![buttonIndex], forState: UIControlState.Normal)
             button.setTitleColor(colorNormal, forState: UIControlState.Normal)
             button.setTitleColor(colorHighlighted, forState: UIControlState.Highlighted)
+            button.setTitleColor(colorHighlighted, forState: UIControlState.Disabled)
             
             container.addSubview(button)
             
@@ -286,6 +296,17 @@ class CustomIOS7AlertView: UIView {
         view.addMotionEffect(motionEffectGroup)
     }
     
+    // Whether the UI is in landscape mode
+    private func orientationIsLandscape() -> Bool {
+        return UIInterfaceOrientationIsLandscape(UIApplication.sharedApplication().statusBarOrientation)
+    }
+    
+    // Call the delegates
+    internal func buttonTouchUpInside(sender: UIButton!) {
+        delegate?.customIOS7AlertViewButtonTouchUpInside(self, buttonIndex: sender.tag)
+        onButtonTouchUpInside?(alertView: self, buttonIndex: sender.tag)
+    }
+    
     // Handle device orientation changes
     internal func deviceOrientationDidChange(notification: NSNotification) {
         let interfaceOrientation = UIApplication.sharedApplication().statusBarOrientation
@@ -294,26 +315,26 @@ class CustomIOS7AlertView: UIView {
         var rotation: CGAffineTransform
         
         switch (interfaceOrientation) {
-            case UIInterfaceOrientation.LandscapeLeft:
-                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 270 / 180))
-                break
-                
-            case UIInterfaceOrientation.LandscapeRight:
-                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 90 / 180))
-                break
-                
-            case UIInterfaceOrientation.PortraitUpsideDown:
-                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 180 / 180))
-                break
-                
-            default:
-                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + 0)
-                break
+        case UIInterfaceOrientation.LandscapeLeft:
+            rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 270 / 180))
+            break
+            
+        case UIInterfaceOrientation.LandscapeRight:
+            rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 90 / 180))
+            break
+            
+        case UIInterfaceOrientation.PortraitUpsideDown:
+            rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 180 / 180))
+            break
+            
+        default:
+            rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + 0)
+            break
         }
         
         UIView.animateWithDuration(0.2, delay: 0, options: UIViewAnimationOptions.TransitionNone, animations: {
             self.alertView.transform = rotation
-        }, nil)
+            }, nil)
         
         // Fix errors caused by being rotated one too many times
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(0.5 * Double(NSEC_PER_SEC))), dispatch_get_main_queue(), {
@@ -342,7 +363,7 @@ class CustomIOS7AlertView: UIView {
                 dialogSize.width,
                 dialogSize.height
             )
-        }, completion: nil)
+            }, completion: nil)
     }
     
     // Handle keyboard hide changes
@@ -357,12 +378,7 @@ class CustomIOS7AlertView: UIView {
                 dialogSize.width,
                 dialogSize.height
             )
-        }, completion: nil)
-    }
-    
-    // Whether the UI is in landscape mode
-    private func orientationIsLandscape() -> Bool {
-        return UIInterfaceOrientationIsLandscape(UIApplication.sharedApplication().statusBarOrientation)
+            }, completion: nil)
     }
     
     deinit {
