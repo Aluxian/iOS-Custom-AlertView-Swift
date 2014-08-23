@@ -1,0 +1,348 @@
+//
+//  CustomIOS7AlertView.swift
+//  CustomIOS7AlertView
+//
+//  Created by Alexandru Rosianu on 23/08/14.
+//  Copyright (c) 2014 Alexandru Rosianu. All rights reserved.
+//
+
+import UIKit
+
+protocol CustomIOS7AlertViewDelegate: class {
+    func customIOS7AlertViewButtonTouchUpInside(alertView: CustomIOS7AlertView, buttonIndex: Int)
+}
+
+class CustomIOS7AlertView: UIView {
+    
+    var buttonHeight: CGFloat = 50
+    var buttonsDividerHeight: CGFloat = 1
+    var cornerRadius: CGFloat = 7
+    
+    var useMotionEffects = true
+    var motionEffectExtent = 10
+    
+    var alertView: UIView!
+    var containerView: UIView!
+    
+    var buttonTitles = [String]?()
+    var buttonColor: UIColor?
+    var buttonColorHighlighted: UIColor?
+    
+    weak var delegate: CustomIOS7AlertViewDelegate?
+    var onButtonTouchUpInside: ((alertView: CustomIOS7AlertView, buttonIndex: Int) -> Void)?
+    
+    override init() {
+        super.init()
+        
+        self.frame = CGRectMake(0, 0, UIScreen.mainScreen().bounds.size.width, UIScreen.mainScreen().bounds.size.height);
+        buttonTitles = ["Close"]
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "deviceOrientationDidChange:", name: UIDeviceOrientationDidChangeNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillShow:", name:UIKeyboardWillShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillHide:", name:UIKeyboardWillHideNotification, object: nil)
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+    }
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
+    
+    // Create the dialog view and animate its opening
+    func show() {
+        alertView = createAlertView()
+        
+        self.layer.shouldRasterize = true
+        self.layer.rasterizationScale = UIScreen.mainScreen().scale
+        
+        self.backgroundColor = UIColor(white: 0, alpha: 0)
+        self.addSubview(alertView)
+        
+        // Attach to the top most window
+        switch (UIApplication.sharedApplication().statusBarOrientation) {
+            case UIInterfaceOrientation.LandscapeLeft:
+                self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 270 / 180))
+                
+            case UIInterfaceOrientation.LandscapeRight:
+                self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 90 / 180))
+                
+            case UIInterfaceOrientation.PortraitUpsideDown:
+                self.transform = CGAffineTransformMakeRotation(CGFloat(M_PI * 180 / 180))
+                
+            default:
+                break
+        }
+        
+        self.frame = CGRectMake(0, 0, self.frame.width, self.frame.height)
+        UIApplication.sharedApplication().windows.first?.addSubview(self)
+        
+        UIView.animateWithDuration(0.2, delay: 0, options: UIViewAnimationOptions.CurveEaseInOut, animations: {
+            self.backgroundColor = UIColor(white: 0, alpha: 0.4)
+            self.alertView.layer.opacity = 1
+            self.alertView.layer.transform = CATransform3DMakeScale(1, 1, 1)
+        }, nil)
+    }
+    
+    // Call the delegates
+    func buttonTouchUpInside(sender: UIButton!) {
+        delegate?.customIOS7AlertViewButtonTouchUpInside(self, buttonIndex: sender.tag)
+        onButtonTouchUpInside?(alertView: self, buttonIndex: sender.tag)
+    }
+    
+    // Close the alertView, remove views
+    func close() {
+        let currentTransform = alertView.layer.transform
+        
+        let startRotation = alertView.valueForKeyPath("layer.transform.rotation.z").floatValue
+        let rotation = CATransform3DMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 270 / 180), 0, 0, 0)
+        
+        alertView.layer.transform = CATransform3DConcat(rotation, CATransform3DMakeScale(1, 1, 1))
+        alertView.layer.opacity = 1
+        
+        UIView.animateWithDuration(0.2, delay: 0, options: UIViewAnimationOptions.TransitionNone, animations: {
+            self.backgroundColor = UIColor(white: 0, alpha: 0)
+            self.alertView.layer.transform = CATransform3DConcat(currentTransform, CATransform3DMakeScale(0.6, 0.6, 1))
+            self.alertView.layer.opacity = 0
+        }, completion: { (Bool) in
+            for view in self.subviews as [UIView] {
+                view.removeFromSuperview()
+            }
+            
+            self.removeFromSuperview()
+        })
+    }
+    
+    // Create the containerView
+    func createAlertView() -> UIView {
+        if containerView == nil {
+            containerView = UIView(frame: CGRectMake(0, 0, 300, 150))
+        }
+        
+        let screenSize = self.calculateScreenSize()
+        let dialogSize = self.calculateDialogSize()
+
+        let view = UIView(frame: CGRectMake(
+            (screenSize.width - dialogSize.width) / 2,
+            (screenSize.height - dialogSize.height) / 2,
+            dialogSize.width,
+            dialogSize.height
+        ))
+        
+        // Style the alertView to match the iOS7 UIAlertView
+        view.layer.insertSublayer(generateGradient(view.bounds), atIndex: 0)
+        view.layer.cornerRadius = cornerRadius
+        
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor(red: 198/255, green: 198/255, blue: 198/255, alpha:1).CGColor!
+        
+        view.layer.shadowRadius = cornerRadius + 5
+        view.layer.shadowOpacity = 0.1
+        view.layer.shadowColor = UIColor.blackColor().CGColor!
+        view.layer.shadowOffset = CGSizeMake(0 - (cornerRadius + 5) / 2, 0 - (cornerRadius + 5) / 2)
+        view.layer.shadowPath = UIBezierPath(roundedRect: view.bounds, cornerRadius: view.layer.cornerRadius).CGPath
+        
+        view.layer.opacity = 0.5
+        view.layer.transform = CATransform3DMakeScale(1.3, 1.3, 1)
+        
+        view.layer.shouldRasterize = true
+        view.layer.rasterizationScale = UIScreen.mainScreen().scale
+        
+        // Apply motion effects
+        if useMotionEffects {
+            applyMotionEffects(view)
+        }
+
+        // Add subviews
+        view.addSubview(generateButtonsDivider(view.bounds))
+        view.addSubview(containerView)
+        self.addButtonsToView(view)
+        
+        return view
+    }
+    
+    // Generate the view for the buttons divider
+    func generateButtonsDivider(bounds: CGRect) -> UIView {
+        let divider = UIView(frame: CGRectMake(
+            0,
+            bounds.size.height - buttonHeight - buttonsDividerHeight,
+            bounds.size.width,
+            buttonsDividerHeight
+        ))
+        
+        divider.backgroundColor = UIColor(red: 198/255, green: 198/255, blue: 198/255, alpha: 1)
+        
+        return divider
+    }
+    
+    // Generate the gradient layer of the alertView
+    func generateGradient(bounds: CGRect) -> CAGradientLayer {
+        let gradient = CAGradientLayer()
+
+        gradient.frame = bounds
+        gradient.cornerRadius = cornerRadius
+        
+        gradient.colors = [
+            UIColor(red: 218/255, green: 218/255, blue: 218/255, alpha:1).CGColor!,
+            UIColor(red: 233/255, green: 233/255, blue: 233/255, alpha:1).CGColor!,
+            UIColor(red: 218/255, green: 218/255, blue: 218/255, alpha:1).CGColor!
+        ]
+        
+        return gradient
+    }
+    
+    // Add the buttons to the containerView
+    func addButtonsToView(container: UIView) {
+        if buttonTitles == nil || buttonTitles?.count == 0 {
+            return
+        }
+        
+        let buttonWidth = container.bounds.size.width / CGFloat(buttonTitles!.count)
+        
+        for buttonIndex in 0...(buttonTitles!.count - 1) {
+            let button = UIButton.buttonWithType(UIButtonType.Custom) as UIButton
+            
+            button.frame = CGRectMake(
+                CGFloat(buttonIndex) * CGFloat(buttonWidth),
+                container.bounds.size.height - buttonHeight,
+                buttonWidth,
+                buttonHeight
+            )
+            
+            button.tag = buttonIndex
+            button.addTarget(self, action: "buttonTouchUpInside:", forControlEvents: UIControlEvents.TouchUpInside)
+
+            let colorNormal = buttonColor != nil ? buttonColor : button.tintColor
+            let colorHighlighted = buttonColorHighlighted != nil ? buttonColorHighlighted : button.tintColor.colorWithAlphaComponent(0.5)
+            
+            button.setTitle(buttonTitles![buttonIndex], forState: UIControlState.Normal)
+            button.setTitleColor(colorNormal, forState: UIControlState.Normal)
+            button.setTitleColor(colorHighlighted, forState: UIControlState.Highlighted)
+            
+            container.addSubview(button)
+        }
+    }
+    
+    // Calculate the size of the dialog
+    func calculateDialogSize() -> CGSize {
+        return CGSizeMake(
+            containerView.frame.size.width,
+            containerView.frame.size.height + buttonHeight + buttonsDividerHeight
+        )
+    }
+    
+    // Calculate the size of the screen
+    func calculateScreenSize() -> CGSize {
+        let width = UIScreen.mainScreen().bounds.width
+        let height = UIScreen.mainScreen().bounds.height
+
+        if orientationIsLandscape() {
+            return CGSizeMake(height, width)
+        } else {
+            return CGSizeMake(width, height)
+        }
+    }
+    
+    // Add motion effects
+    func applyMotionEffects(view: UIView) {
+        let horizontalEffect = UIInterpolatingMotionEffect(keyPath: "center.x", type: UIInterpolatingMotionEffectType.TiltAlongHorizontalAxis)
+        horizontalEffect.minimumRelativeValue = -motionEffectExtent
+        horizontalEffect.maximumRelativeValue = +motionEffectExtent
+        
+        let verticalEffect = UIInterpolatingMotionEffect(keyPath: "center.y", type: UIInterpolatingMotionEffectType.TiltAlongVerticalAxis)
+        verticalEffect.minimumRelativeValue = -motionEffectExtent
+        verticalEffect.maximumRelativeValue = +motionEffectExtent
+        
+        let motionEffectGroup = UIMotionEffectGroup()
+        motionEffectGroup.motionEffects = [horizontalEffect, verticalEffect]
+        
+        view.addMotionEffect(motionEffectGroup)
+    }
+    
+    // Handle device orientation changes
+    func deviceOrientationDidChange(notification: NSNotification) {
+        let interfaceOrientation = UIApplication.sharedApplication().statusBarOrientation
+        let startRotation = self.valueForKeyPath("layer.transform.rotation.z").floatValue
+        
+        var rotation: CGAffineTransform
+        
+        switch (interfaceOrientation) {
+            case UIInterfaceOrientation.LandscapeLeft:
+                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 270 / 180))
+                break
+                
+            case UIInterfaceOrientation.LandscapeRight:
+                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 90 / 180))
+                break
+                
+            case UIInterfaceOrientation.PortraitUpsideDown:
+                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + CGFloat(M_PI * 180 / 180))
+                break
+                
+            default:
+                rotation = CGAffineTransformMakeRotation(CGFloat(-startRotation) + 0)
+                break
+        }
+        
+        UIView.animateWithDuration(0.2, delay: 0, options: UIViewAnimationOptions.TransitionNone, animations: {
+            self.alertView.transform = rotation
+        }, nil)
+        
+        // Fix errors caused by being rotated one too many times
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, Int64(0.5 * Double(NSEC_PER_SEC))), dispatch_get_main_queue(), {
+            let endInterfaceOrientation = UIApplication.sharedApplication().statusBarOrientation
+            if interfaceOrientation != endInterfaceOrientation {
+                // TODO: user moved phone again before than animation ended: rotation animation can introduce errors here
+            }
+        })
+    }
+    
+    // Handle keyboard show changes
+    func keyboardWillShow(notification: NSNotification) {
+        let screenSize = self.calculateScreenSize()
+        let dialogSize = self.calculateDialogSize()
+        
+        var keyboardSize = notification.userInfo![UIKeyboardFrameBeginUserInfoKey]!.CGRectValue().size
+        
+        if orientationIsLandscape() {
+            keyboardSize = CGSize(width: keyboardSize.height, height: keyboardSize.width)
+        }
+        
+        UIView.animateWithDuration(0.2, delay: 0, options: UIViewAnimationOptions.TransitionNone, animations: {
+            self.alertView.frame = CGRectMake((
+                screenSize.width - dialogSize.width) / 2,
+                (screenSize.height - keyboardSize.height - dialogSize.height) / 2,
+                dialogSize.width,
+                dialogSize.height
+            )
+        }, completion: nil)
+    }
+    
+    // Handle keyboard hide changes
+    func keyboardWillHide(notification: NSNotification) {
+        let screenSize = self.calculateScreenSize()
+        let dialogSize = self.calculateDialogSize()
+        
+        UIView.animateWithDuration(0.2, delay: 0, options: UIViewAnimationOptions.TransitionNone, animations: {
+            self.alertView.frame = CGRectMake(
+                (screenSize.width - dialogSize.width) / 2,
+                (screenSize.height - dialogSize.height) / 2,
+                dialogSize.width,
+                dialogSize.height
+            )
+        }, completion: nil)
+    }
+    
+    // Whether the UI is in landscape mode
+    func orientationIsLandscape() -> Bool {
+        return UIInterfaceOrientationIsLandscape(UIApplication.sharedApplication().statusBarOrientation)
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIDeviceOrientationDidChangeNotification, object: nil)
+        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillHideNotification, object: nil)
+        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: nil)
+    }
+    
+}

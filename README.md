@@ -10,35 +10,34 @@ As a solution, this class creates an iOS7-style dialog which you can extend with
 
 ## Install
 
-As simple as adding the following files to your project:
+As simple as adding the following file to your project:
 
-* CustomIOS7AlertView.h
-* CustomIOS7AlertView.m
+* CustomIOS7AlertView.swift
 
-## Change notes
+## Support
 
-The initWithParentView method is now deprecated. Please use the init method instead, where you don't need to pass a parent view at all. **In case the init doesn't work for you, please leave a note or open an issue here.**
+Only iOS 7 and newer.
 
 ## Quick start guide
 
-1. Create the UIView object `changed`
+1. Create a CustomIOS7AlertView instance
 
     ```
-    CustomIOS7AlertView *alertView = [[CustomIOS7AlertView alloc] init];
+    var alertView = CustomIOS7AlertView()
     ```
-  
-2. Add some custom content to the alert view (optional)
+
+2. Add some custom content to the alert view
 
     ```
-    UIView *customView ..;
+    var customView: UIView = ...
 
-    [alertView setContainerView:customView];
+    alertView.setContainerView(customView)
     ```
 
 3. Display the dialog
 
     ```
-    [alertView show];
+    alertView.show()
     ```
 
 ## More functions
@@ -46,25 +45,19 @@ The initWithParentView method is now deprecated. Please use the init method inst
 * Close the dialog
 
     ```
-    [alertView close];
+    alertView.close()
     ```
 
 * To add more buttons, pass a list of titles
 
     ```
-    [alertView setButtonTitles:[NSMutableArray arrayWithObjects:@"Button1", @"Button2", @"Button3", nil]];
-    ```
-
-* You can remove all buttons by passing nil
-
-    ```
-    [alertView setButtonTitles:NULL];
+    alertView.setButtonTitles(["Cancel", "OK"])
     ```
 
 * You can enable or disable the iOS7 parallax effects on the alert view
 
     ```
-    [alertView setUseMotionEffects:TRUE];
+    alertView.setUseMotionEffects(true)
     ```
 
 * Handle button clicks with a custom delegate
@@ -72,7 +65,7 @@ The initWithParentView method is now deprecated. Please use the init method inst
     First, set the delegate:
 
     ```
-    [alertView setDelegate:self];
+    alertView.delegate = self
     ```
 
     Then add the delegate methods:
@@ -99,16 +92,9 @@ The initWithParentView method is now deprecated. Please use the init method inst
 [alertView setDelegate:self];
     ```
 
-## Todos
-
-This is a really quick implementation, and there are a few things missing:
-
-* Adding more buttons: they don't exactly match the look with that of on iOS7
-
-* Rotation: rotates wrong with the keyboard on
-
 ## Special thanks to
 
+* [@wimagguc](https://github.com/wimagguc) for pulling this all together in a repo for Obj-C
 * [@tamasdancsi](https://github.com/tamasdancsi) for his support with the initial code  
 * [@dingosky](https://github.com/dingosky) for his work on the parallax effects code  
 * [@raspu](https://github.com/raspu) for his work on the protocol delegates, iOS6 support and onButtonClick blocks  
@@ -144,20 +130,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-## Other projects
-
-Check out [AppWoodoo](http://www.appwoodoo.com/), our remote app settings (and A/B testing) service. It's open source and free to use.
-
-Some more of my free stuff for web devs at [Github](https://github.com/wimagguc?tab=repositories).
-
-Project updates [newsletter](http://wimagguc.us4.list-manage.com/subscribe/post?u=83343dbd708d35d76618f66c5&id=da7cc7f1dc)
-
-## About
-
-Richard Dancsi  
-[www.wimagguc.com](http://www.wimagguc.com/)  
-
-twitter: [@wimagguc](http://twitter.com/wimagguc)  
-linkedin: [linkedin.com/in/richarddancsi](http://linkedin.com/in/richarddancsi)  
-gplus: [plus.google.com/u/0/115939246085616544919](https://plus.google.com/u/0/115939246085616544919)  
